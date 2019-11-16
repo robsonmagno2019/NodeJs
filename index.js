@@ -20,17 +20,29 @@ function checkUserExists(req, res, next) {
   return next();
 }
 
-server.get('/users', (req, res) => {
+function checkUserInArray(req, res, next) {
+  const user = users[req.params.index];
+
+  if (!user) {
+    return res.status(400).json({
+      error: 'User does not exists'
+    });
+  }
+
+  req.user = user;
+
+  return next();
+}
+
+server.get('/users', checkUserInArray, (req, res) => {
   return res.json(users);
 });
 
-server.get('/users/:index', (req, res) => {
-  const { index } = req.params;
-
-  return res.json(users[index]);
+server.get('/users/:index', checkUserInArray, (req, res) => {
+  return res.json(req.user);
 });
 
-server.post('/users', checkUserExists, (req, res) => {
+server.post('/users', checkUserExists, checkUserInArray, (req, res) => {
   const { name } = req.body;
 
   users.push(name);
@@ -38,7 +50,7 @@ server.post('/users', checkUserExists, (req, res) => {
   return res.json(users);
 });
 
-server.put('/users/:index', checkUserExists, (req, res) => {
+server.put('/users/:index', checkUserExists, checkUserInArray, (req, res) => {
   const { index } = req.params;
   const { name } = req.body;
 
@@ -47,7 +59,7 @@ server.put('/users/:index', checkUserExists, (req, res) => {
   return res.json(users);
 });
 
-server.delete('/users/:index', (req, res) => {
+server.delete('/users/:index', checkUserInArray, (req, res) => {
   const { index } = req.params;
 
   users.splice(index, 1);
